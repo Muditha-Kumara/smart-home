@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { config } from '../config';
 import logger from '../utils/logger';
@@ -9,6 +9,14 @@ import { BadRequestError, UnauthorizedError } from '../utils/errors';
 const prisma = new PrismaClient();
 
 export class AuthController {
+  private generateToken(userId: string, role: string): string {
+    const payload = { userId, role };
+    const options: SignOptions = {
+      expiresIn: config.jwt.expiresIn as SignOptions['expiresIn'],
+    };
+    return jwt.sign(payload, config.jwt.secret, options);
+  }
+
   async register(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password, firstName, lastName, role, phone } = req.body;
@@ -29,11 +37,7 @@ export class AuthController {
         },
       });
 
-      const token = jwt.sign(
-        { userId: user.id, role: user.role },
-        config.jwt.secret,
-        { expiresIn: config.jwt.expiresIn }
-      );
+      const token = this.generateToken(user.id, user.role);
 
       logger.info('User registered', { userId: user.id, role: user.role });
 
@@ -65,11 +69,7 @@ export class AuthController {
       const isValid = await bcrypt.compare(password, user.passwordHash);
       if (!isValid) throw new UnauthorizedError('Invalid credentials');
 
-      const token = jwt.sign(
-        { userId: user.id, role: user.role },
-        config.jwt.secret,
-        { expiresIn: config.jwt.expiresIn }
-      );
+      const token = this.generateToken(user.id, user.role);
 
       // Store session
       await prisma.loginSession.create({

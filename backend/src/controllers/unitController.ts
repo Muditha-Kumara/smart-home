@@ -25,8 +25,9 @@ export class UnitController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
       const unit = await prisma.unit.findUnique({
-        where: { id: req.params.id },
+        where: { id },
         include: {
           sensors: { where: { isActive: true } },
           schedules: { orderBy: { dayOfWeek: 'asc' } },
@@ -64,9 +65,10 @@ export class UnitController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
       const { name, nameFi, description, unitType, minTemp, maxTemp, defaultTemp, currentMode } = req.body;
       const unit = await prisma.unit.update({
-        where: { id: req.params.id },
+        where: { id },
         data: {
           name, nameFi, description, unitType,
           minTemp, maxTemp, defaultTemp, currentMode,
@@ -81,8 +83,9 @@ export class UnitController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      await prisma.unit.delete({ where: { id: req.params.id } });
-      logger.info('Unit deleted', { unitId: req.params.id });
+      const id = req.params.id as string;
+      await prisma.unit.delete({ where: { id } });
+      logger.info('Unit deleted', { unitId: id });
       res.json({ success: true, message: 'Unit deleted' });
     } catch (error) {
       next(error);
@@ -91,8 +94,9 @@ export class UnitController {
 
   async getLatestReadings(req: Request, res: Response, next: NextFunction) {
     try {
+      const unitId = req.params.id as string;
       const readings = await prisma.sensorReading.findMany({
-        where: { unitId: req.params.id },
+        where: { unitId },
         orderBy: { recordedAt: 'desc' },
         take: 50,
       });
@@ -104,6 +108,7 @@ export class UnitController {
 
   async getEnergyRecords(req: Request, res: Response, next: NextFunction) {
     try {
+      const unitId = req.params.id as string;
       const { period = 'week' } = req.query;
       const now = new Date();
       let startDate: Date;
@@ -118,7 +123,7 @@ export class UnitController {
 
       const records = await prisma.energyRecord.findMany({
         where: {
-          unitId: req.params.id,
+          unitId,
           date: { gte: startDate },
         },
         orderBy: { date: 'asc' },

@@ -24,8 +24,9 @@ export class SensorController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
       const sensor = await prisma.sensor.findUnique({
-        where: { id: req.params.id },
+        where: { id },
         include: {
           unit: true,
           readings: { orderBy: { recordedAt: 'desc' }, take: 20 },
@@ -62,9 +63,10 @@ export class SensorController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
       const { name, sensorType, shellyDeviceId, shellyApiKey, shellyModel, isActive, channel, ipAddress } = req.body;
       const sensor = await prisma.sensor.update({
-        where: { id: req.params.id },
+        where: { id },
         data: { name, sensorType, shellyDeviceId, shellyApiKey, shellyModel, isActive, channel, ipAddress },
       });
       logger.info('Sensor updated', { sensorId: sensor.id });
@@ -76,8 +78,9 @@ export class SensorController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      await prisma.sensor.delete({ where: { id: req.params.id } });
-      logger.info('Sensor deleted', { sensorId: req.params.id });
+      const id = req.params.id as string;
+      await prisma.sensor.delete({ where: { id } });
+      logger.info('Sensor deleted', { sensorId: id });
       res.json({ success: true, message: 'Sensor deleted' });
     } catch (error) {
       next(error);
@@ -86,11 +89,12 @@ export class SensorController {
 
   async getReadings(req: Request, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
       const { hours = 24 } = req.query;
       const since = new Date(Date.now() - Number(hours) * 60 * 60 * 1000);
       const readings = await prisma.sensorReading.findMany({
         where: {
-          sensorId: req.params.id,
+          sensorId: id,
           recordedAt: { gte: since },
         },
         orderBy: { recordedAt: 'asc' },
