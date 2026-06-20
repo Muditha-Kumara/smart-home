@@ -1,0 +1,263 @@
+// Smart Heating Dashboard - Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// USERS & AUTHENTICATION
+// ==========================================
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  role          Role      @default(USER)
+  phone         String?
+  language      String    @default("fi")
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  units         Unit[]    @relation("UnitOwner")
+  sensorReadings SensorReading[]
+  optimizations Optimization[]
+  loginSessions LoginSession[]
+
+  @@map("users")
+}
+
+model LoginSession {
+  id          String    @id @default(uuid())
+  userId      String
+  token       String    @unique
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  userAgent   String?
+  ipAddress   String?
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("login_sessions")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+// ==========================================
+// UNITS (Rooms / Zones)
+// ==========================================
+model Unit {
+  id              String    @id @default(uuid())
+  name            String
+  nameFi          String    // Finnish name
+  description     String?
+  unitType        UnitType  @default(ROOM)
+  ownerId         String
+  isActive        Boolean   @default(true)
+  minTemp         Float     @default(5.0)   // Minimum safe temperature
+  maxTemp         Float     @default(30.0)  // Maximum safe temperature
+  defaultTemp     Float     @default(21.0)  // Default target temperature
+  currentMode     ControlMode @default(THERMOSTAT)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  owner           User      @relation("UnitOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  sensors         Sensor[]
+  sensorReadings  SensorReading[]
+  schedules       Schedule[]
+  energyRecords   EnergyRecord[]
+  optimizations   Optimization[]
+
+  @@map("units")
+}
+
+enum UnitType {
+  ROOM
+  WATER_HEATER
+  HEAT_PUMP
+  HALLWAY
+  UTILITY
+}
+
+enum ControlMode {
+  WEEKLY_SCHEDULE   // Viikkokello-ajastus
+  SPOT_PRICE        // Pörssisähköohjaus
+  THERMOSTAT        // Termostaattitoiminto
+  SCENE             // Kohtausohjaus
+  MANUAL            // Manual override
+}
+
+// ==========================================
+// SENSORS (Shelly devices)
+// ==========================================
+model Sensor {
+  id              String    @id @default(uuid())
+  name            String
+  sensorType      SensorType
+  shellyDeviceId  String?   // Shelly cloud device ID
+  shellyApiKey    String?   // Shelly auth key for this device
+  shellyModel     String?   // e.g. "Plus 1PM", "Pro 4PM"
+  unitId          String
+  isActive        Boolean   @default(true)
+  channel         Int       @default(0) // Channel for multi-channel devices
+  ipAddress       String?   // Local IP for direct access
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  unit            Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  readings        SensorReading[]
+
+  @@map("sensors")
+}
+
+enum SensorType {
+  TEMPERATURE       // DS18B20 temperature sensor
+  HUMIDITY          // Shelly H&T humidity sensor
+  POWER_METER       // Shelly 1PM/4PM power metering
+  RELAY             // Shelly relay switch
+  FLOOR_TEMP        // Floor temperature sensor
+  AMBIENT           // Ambient temp + humidity combo
+}
+
+// ==========================================
+// SENSOR READINGS (Time-series data)
+// ==========================================
+model SensorReading {
+  id              String    @id @default(uuid())
+  sensorId        String
+  unitId          String
+  temperature     Float?    // Celsius
+  humidity        Float?    // Percentage
+  power           Float?    // Watts
+  energy          Float?    // kWh accumulated
+  relayState      Boolean?  // true = on, false = off
+  voltage         Float?    // Volts
+  recordedAt      DateTime  @default(now())
+
+  // Relations
+  sensor          Sensor    @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  unit            Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  user            User?     @relation(fields: [recordedById], references: [id])
+  recordedById    String?
+
+  @@index([unitId, recordedAt])
+  @@index([sensorId, recordedAt])
+  @@index([recordedAt])
+  @@map("sensor_readings")
+}
+
+// ==========================================
+// ENERGY RECORDS (Daily aggregation)
+// ==========================================
+model EnergyRecord {
+  id              String    @id @default(uuid())
+  unitId          String
+  date            DateTime  @db.Date
+  totalKwh        Float     @default(0)
+  peakPower       Float     @default(0)    // Peak watts
+  avgTemp         Float?
+  minTemp         Float?
+  maxTemp         Float?
+  costEstimate    Float?    // Estimated cost in EUR
+  spotPriceAvg    Float?    // Average spot price EUR/kWh
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  unit            Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, date])
+  @@map("energy_records")
+}
+
+// ==========================================
+// SCHEDULES (Weekly heating schedules)
+// ==========================================
+model Schedule {
+  id              String    @id @default(uuid())
+  unitId          String
+  dayOfWeek       Int       // 0=Sunday, 6=Saturday
+  startTime       String    // "HH:mm" format
+  endTime         String    // "HH:mm" format
+  targetTemp      Float
+  isEnabled       Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  unit            Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@map("schedules")
+}
+
+// ==========================================
+// WEATHER DATA
+// ==========================================
+model WeatherData {
+  id              String    @id @default(uuid())
+  location        String    // City or coordinates
+  temperature     Float     // Outside temperature Celsius
+  feelsLike       Float?
+  humidity        Float?
+  windSpeed       Float?
+  description     String?   // Weather description
+  forecastDate    DateTime  // Date this forecast is for
+  fetchedAt       DateTime  @default(now())
+
+  @@index([location, forecastDate])
+  @@map("weather_data")
+}
+
+// ==========================================
+// ELECTRICITY PRICES (Nord Pool spot prices)
+// ==========================================
+model ElectricityPrice {
+  id              String    @id @default(uuid())
+  region          String    @default("FI")  // Price region
+  pricePerKwh     Float     // EUR/kWh (including VAT if configured)
+  timestamp       DateTime  // Start of the price period
+  fetchedAt       DateTime  @default(now())
+
+  @@unique([region, timestamp])
+  @@index([timestamp])
+  @@map("electricity_prices")
+}
+
+// ==========================================
+// LLM OPTIMIZATION RESULTS
+// ==========================================
+model Optimization {
+  id              String    @id @default(uuid())
+  unitId          String?
+  userId          String?
+  inputContext    Json      // Weather, prices, current temps, etc.
+  recommendation  Json      // LLM recommendation output
+  suggestedTemp   Float?    // Suggested temperature setting
+  estimatedSaving Float?    // Estimated savings in EUR
+  appliedAt       DateTime? // When the suggestion was applied
+  status          OptimizationStatus @default(PENDING)
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  unit            Unit?     @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("optimizations")
+}
+
+enum OptimizationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  APPLIED
+}
