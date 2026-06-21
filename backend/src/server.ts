@@ -19,6 +19,9 @@ import dashboardRoutes from './routes/dashboardRoutes';
 
 const app = express();
 
+// Trust proxy (needed when behind Nginx/Docker)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({ origin: config.cors.frontendUrl, credentials: true }));

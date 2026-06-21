@@ -9,10 +9,10 @@ async function main() {
   // Create Admin user
   const adminPassword = await bcrypt.hash('admin123', 12);
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@smart heating.fi' },
+    where: { email: 'admin@smartheating.fi' },
     update: {},
     create: {
-      email: 'admin@smart heating.fi',
+      email: 'admin@smartheating.fi',
       passwordHash: adminPassword,
       firstName: 'Jani',
       lastName: 'Moilanen',
@@ -257,7 +257,7 @@ async function main() {
   }
 
   console.log('✅ Seed completed successfully');
-  console.log('📧 Admin login: admin@smart heating.fi / admin123');
+  console.log('📧 Admin login: admin@smartheating.fi / admin123');
   console.log('📧 User login: vuokralainen@example.fi / user123');
 }
 
