@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Heating - Guest UI</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Phone Container Template */
+        .phone-container {
+            width: 380px;
+            height: 780px;
+            background-color: #2C3E50;
+            border-radius: 40px;
+            padding: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border: 4px solid #34495E;
+        }
+
+        /* Phone Screen */
+        .phone-screen {
+            background-color: #FFFFFF;
+            flex: 1;
+            border-radius: 28px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding: 20px 15px;
+        }
+
+        /* Layout Content Split */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            gap: 15px;
+            margin-bottom: 60px; /* Space for the mic button */
+        }
+
+        /* Temperature Scale Bar */
+        .scale-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            width: 40px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .scale-bar {
+            width: 14px;
+            flex: 1;
+            margin: 8px 0;
+            border-radius: 10px;
+            background: linear-gradient(to top, #4A90E2, #F5A623, #E67E22, #E74C3C);
+        }
+
+        /* House Plan View */
+        .floor-plan {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 12px;
+            background-color: #f9f9f9;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        /* Room Button Template */
+        .room-btn {
+            border: 2px solid #222222;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.1s;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .room-btn:active {
+            transform: scale(0.96);
+            filter: brightness(0.9);
+        }
+
+        .room-name {
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #111;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .room-temp {
+            background-color: #FFFFFF;
+            border: 2px solid #111;
+            border-radius: 50%;
+            width: 54px;
+            height: 54px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Dynamic Room Color Mapping based on Scale */
+        .temp-15 { background-color: #A9CCE3; } /* Storage - Cool Blue */
+        .temp-17 { background-color: #D5F5E3; } /* Utility Room - Soft Green-Blue */
+        .temp-20 { background-color: #F9E79F; } /* Living & Hallway - Warm Yellow */
+        .temp-22 { background-color: #F5B041; } /* Bedroom - Cozy Orange */
+
+        /* Layout Grid Placement */
+        .living-hallway {
+            grid-column: 1 / span 2;
+            grid-row: 1;
+        }
+        .utility-room {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        .storage-room {
+            grid-column: 2;
+            grid-row: 2;
+        }
+        .bedroom {
+            grid-column: 1 / span 2;
+            grid-row: 3;
+        }
+
+        /* Microphone Control Layer */
+        .audio-container {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .mic-btn {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background-color: #E74C3C;
+            border: 3px solid #FFFFFF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .mic-btn:active {
+            transform: scale(0.92);
+            background-color: #C0392B;
+        }
+
+        .mic-icon {
+            width: 26px;
+            height: 26px;
+            fill: #FFFFFF;
+        }
+
+        /* Phone Home Button Visual */
+        .phone-home-button {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #7F8C8D;
+            border-radius: 50%;
+            margin: 10px auto 5px auto;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <div class="phone-screen">
+            
+            <div class="main-layout">
+                
+                <div class="scale-container">
+                    <span>25°C</span>
+                    <div class="scale-bar"></div>
+                    <span>15°C</span>
+                </div>
+                
+                <div class="floor-plan">
+                    
+                    <div class="room-btn living-hallway temp-20" onclick="alert('Opening Living & Hallway Settings')">
+                        <span class="room-name">Living & Hall</span>
+                        <div class="room-temp">20°C</div>
+                    </div>
+                    
+                    <div class="room-btn utility-room temp-17" onclick="alert('Opening Utility Room Settings')">
+                        <span class="room-name">Utility</span>
+                        <div class="room-temp">17°C</div>
+                    </div>
+                    
+                    <div class="room-btn storage-room temp-15" onclick="alert('Opening Storage Settings')">
+                        <span class="room-name">Storage</span>
+                        <div class="room-temp">15°C</div>
+                    </div>
+                    
+                    <div class="room-btn bedroom temp-22" onclick="alert('Opening Bedroom Settings')">
+                        <span class="room-name">Bedroom</span>
+                        <div class="room-temp">22°C</div>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="audio-container">
+                <button class="mic-btn" aria-label="Voice Command" onclick="alert('Listening for voice command...')">
+                    <svg class="mic-icon" viewBox="0 0 24 24">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm4.3-3c0 2.37-1.93 4.3-4.3 4.3S7.7 13.37 7.7 11H6c0 2.97 2.19 5.43 5 5.91V20h2v-3.09c2.81-.48 5-2.94 5-5.91h-1.7z"/>
+                    </svg>
+                </button>
+            </div>
+
+        </div>
+        
+        <div class="phone-home-button"></div>
+    </div>
+
+</body>
+</html>

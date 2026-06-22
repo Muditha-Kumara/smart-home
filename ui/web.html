@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Älykäs Lämmitys - Smart Heating</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn-icon:hover {
+            transform: scale(1.1);
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-help {
+            background: #ffd700;
+            border-color: #ffd700;
+        }
+
+        /* Main Content */
+        .main-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .room-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .room-content {
+            padding: 25px;
+        }
+
+        .room-name {
+            font-size: 26px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .room-icon {
+            font-size: 32px;
+        }
+
+        /* Temperature Display */
+        .temp-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .current-temp {
+            font-size: 64px;
+            font-weight: bold;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .temp-label {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .target-temp {
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid rgba(255,255,255,0.3);
+            font-size: 20px;
+        }
+
+        /* Temperature Controls */
+        .temp-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .temp-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            font-size: 36px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .temp-minus {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .temp-plus {
+            background: #51cf66;
+            color: white;
+        }
+
+        .temp-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .temp-btn:active {
+            transform: scale(0.95);
+        }
+
+        .temp-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* Status Indicator */
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-active .status-dot {
+            background: #51cf66;
+        }
+
+        .status-inactive .status-dot {
+            background: #adb5bd;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 20px 30px;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            background: white;
+            color: #667eea;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .action-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .action-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Voice Control Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .mic-animation {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 70px;
+            color: white;
+            animation: breathe 2s infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .modal-text {
+            font-size: 24px;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        .close-modal {
+            margin-top: 20px;
+            padding: 15px 40px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Energy Info */
+        .energy-info {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 20px;
+            padding: 25px;
+            color: white;
+            text-align: center;
+        }
+
+        .energy-value {
+            font-size: 42px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .temp-controls {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+            }
+        }
+
+        /* Accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+        }
+
+        *:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <div>
+                    <div class="title">Älykäs Lämmitys</div>
+                    <div class="subtitle">Smart Heating Control</div>
+                </div>
+            </div>
+            <div class="header-buttons">
+                <button class="btn-icon btn-help" onclick="openHelp()" aria-label="Ohje">
+                    ❓
+                </button>
+                <button class="btn-icon" onclick="toggleVoiceControl()" aria-label="Ääniohjaus">
+                    🎤
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Room Grid -->
+        <div class="main-grid">
+            <!-- Living Room -->
+            <div class="room-card">
+                <img src="living-room.jpg" alt="Olohuone" class="room-image">
+                <div class="room-content">
+                    <div class="room-name">
+                        <span class="room-icon">🛋️</span>
+                        Olohuone
+                    </div>
+                    <div class="temp-display">
+                        <div class="current-temp">22°</div>
+                        <div class="temp-label">Nykyinen lämpötila</div>
+                        <div class="target-temp">Tavoite: 23°</div>
+                    </div>
+                    <div class="temp-controls">
+                        <button class="temp-btn temp-minus" onclick="decreaseTemp('living')" aria-label="Laske lämpötilaa">−</button>
+                        <div class="temp-value" id="living-temp">23°</div>
+                        <button class="temp-btn temp-plus" onclick="increaseTemp('living')" aria-label="Nosta lämpötilaa">+</button>
+                    </div>
+                    <div class="status status-active">
+                        <div class="status-dot"></div>
+                        <span>Lämmitys päällä</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bedroom -->
+            <div class="room-card">
+                <img src="bedroom.jpg" alt="Makuuhuone" class="room-image">
+                <div class="room-content">
+                    <div class="room-name">
+                        <span class="room-icon">🛏️</span>
+                        Makuuhuone
+                    </div>
+                    <div class="temp-display">
+                        <div class="current-temp">20°</div>
+                        <div class="temp-label">Nykyinen lämpötila</div>
+                        <div class="target-temp">Tavoite: 21°</div>
+                    </div>
+                    <div class="temp-controls">
+                        <button class="temp-btn temp-minus" onclick="decreaseTemp('bedroom')" aria-label="Laske lämpötilaa">−</button>
+                        <div class="temp-value" id="bedroom-temp">21°</div>
+                        <button class="temp-btn temp-plus" onclick="increaseTemp('bedroom')" aria-label="Nosta lämpötilaa">+</button>
+                    </div>
+                    <div class="status status-active">
+                        <div class="status-dot"></div>
+                        <span>Lämmitys päällä</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Utility -->
+            <div class="room-card">
+                <img src="utility.jpg" alt="Kodinhoitohuone" class="room-image">
+                <div class="room-content">
+                    <div class="room-name">
+                        <span class="room-icon">🧺</span>
+                        Kodinhoitohuone
+                    </div>
+                    <div class="temp-display">
+                        <div class="current-temp">18°</div>
+                        <div class="temp-label">Nykyinen lämpötila</div>
+                        <div class="target-temp">Tavoite: 20°</div>
+                    </div>
+                    <div class="temp-controls">
+                        <button class="temp-btn temp-minus" onclick="decreaseTemp('utility')" aria-label="Laske lämpötilaa">−</button>
+                        <div class="temp-value" id="utility-temp">20°</div>
+                        <button class="temp-btn temp-plus" onclick="increaseTemp('utility')" aria-label="Nosta lämpötilaa">+</button>
+                    </div>
+                    <div class="status status-active">
+                        <div class="status-dot"></div>
+                        <span>Lämmitys päällä</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="section-title">
+                <span>⚡</span>
+                Pika-asetukset
+            </div>
+            <div class="action-buttons">
+                <button class="action-btn active" onclick="setMode('home')">
+                    <span>🏠</span>
+                    Kotona
+                </button>
+                <button class="action-btn" onclick="setMode('away')">
+                    <span>🚗</span>
+                    Poissa
+                </button>
+                <button class="action-btn" onclick="setMode('eco')">
+                    <span>🌿</span>
+                    Säästävä
+                </button>
+                <button class="action-btn" onclick="setMode('comfort')">
+                    <span>😌</span>
+                    Mukava
+                </button>
+            </div>
+        </div>
+
+        <!-- Energy Info -->
+        <div class="quick-actions">
+            <div class="section-title">
+                <span>📊</span>
+                Energiankulutus tänään
+            </div>
+            <div class="energy-info">
+                <div class="energy-value">12.5 kWh</div>
+                <div>Päivän kulutus</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Control Modal -->
+    <div class="modal" id="voiceModal">
+        <div class="modal-content">
+            <div class="mic-animation">🎤</div>
+            <div class="modal-text">
+                Puhu nyt...<br>
+                <small>Sano esimerkiksi: "Lämmitä olohuone 23 asteeseen"</small>
+            </div>
+            <button class="close-modal" onclick="toggleVoiceControl()">Sulje</button>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div style="font-size: 70px; margin-bottom: 20px;">❓</div>
+            <div class="modal-text">
+                <strong>Miten käytät järjestelmää:</strong><br><br>
+                🔘 Paina + tai − muuttaaksesi lämpötilaa<br><br>
+                🎤 Paina mikrofonia ääniohjaukseen<br><br>
+                🏠 Valitse pika-asetus tilanteen mukaan<br><br>
+                📞 Tarvitsetko apua? Soita: 044-2144645
+            </div>
+            <button class="close-modal" onclick="closeHelp()">Sulje</button>
+        </div>
+    </div>
+
+    <script>
+        // Temperature control
+        const temperatures = {
+            living: 23,
+            bedroom: 21,
+            utility: 20
+        };
+
+        function increaseTemp(room) {
+            if (temperatures[room] < 30) {
+                temperatures[room]++;
+                updateDisplay(room);
+            }
+        }
+
+        function decreaseTemp(room) {
+            if (temperatures[room] > 15) {
+                temperatures[room]--;
+                updateDisplay(room);
+            }
+        }
+
+        function updateDisplay(room) {
+            document.getElementById(room + '-temp').textContent = temperatures[room] + '°';
+        }
+
+        // Mode selection
+        function setMode(mode) {
+            const buttons = document.querySelectorAll('.action-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.action-btn').classList.add('active');
+            
+            const modes = {
+                home: { living: 23, bedroom: 21, utility: 20 },
+                away: { living: 18, bedroom: 17, utility: 16 },
+                eco: { living: 20, bedroom: 19, utility: 18 },
+                comfort: { living: 24, bedroom: 22, utility: 21 }
+            };
+
+            Object.keys(modes[mode]).forEach(room => {
+                temperatures[room] = modes[mode][room];
+                updateDisplay(room);
+            });
+        }
+
+        // Voice control
+        function toggleVoiceControl() {
+            const modal = document.getElementById('voiceModal');
+            modal.classList.toggle('active');
+            
+            if (modal.classList.contains('active')) {
+                // Simulate voice recognition
+                setTimeout(() => {
+                    alert('Ääniohjaus aktivoitu! (Tämä on demo)');
+                }, 1000);
+            }
+        }
+
+        // Help
+        function openHelp() {
+            document.getElementById('helpModal').classList.add('active');
+        }
+
+        function closeHelp() {
+            document.getElementById('helpModal').classList.remove('active');
+        }
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
