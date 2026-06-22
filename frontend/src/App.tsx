@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
+import GuestDashboard from './pages/guest/GuestDashboard';
 import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminSensors from './pages/admin/AdminSensors';
@@ -23,7 +24,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/dashboard" element={<ProtectedRoute>{isAdmin ? <AdminDashboard /> : <UserDashboard />}</ProtectedRoute>} />
       <Route path="/admin/sensors" element={<ProtectedRoute adminOnly><AdminSensors /></ProtectedRoute>} />
       <Route path="/admin/energy" element={<ProtectedRoute adminOnly><AdminEnergy /></ProtectedRoute>} />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<GuestDashboard />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
